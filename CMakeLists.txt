@@ -39,3 +39,7 @@ target_link_libraries(EarTrainerEQ
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags)
+
+if (MSVC)
+    target_compile_options(EarTrainerEQ PRIVATE /utf-8)
+endif()
