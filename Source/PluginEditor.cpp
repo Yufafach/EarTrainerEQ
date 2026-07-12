@@ -53,6 +53,26 @@ EarTrainerAudioProcessorEditor::EarTrainerAudioProcessorEditor (EarTrainerAudioP
     allowCutsToggle.addListener (this);
     addAndMakeVisible (allowCutsToggle);
 
+    gainStepCaption.setText ("Difficulty (dB step):", juce::dontSendNotification);
+    gainStepCaption.setFont (juce::Font (13.0f));
+    addAndMakeVisible (gainStepCaption);
+
+    // One radio-style button per available gain step (3 / 6 / 9 / 12 dB).
+    for (size_t i = 0; i < EarTrainerAudioProcessor::gainStepOptions.size(); ++i)
+    {
+        float stepDb = EarTrainerAudioProcessor::gainStepOptions[i];
+
+        auto* btn = new juce::TextButton (juce::String ((int) stepDb) + " dB");
+        btn->setRadioGroupId (1001, juce::dontSendNotification);
+        btn->setClickingTogglesState (true);
+        btn->setComponentID ("gainstep_" + juce::String ((int) stepDb));
+        btn->setToggleState (juce::approximatelyEqual (stepDb, processor.getGainStepDb()),
+                             juce::dontSendNotification);
+        btn->addListener (this);
+        addAndMakeVisible (btn);
+        gainStepButtons.add (btn);
+    }
+
     resultLabel.setJustificationType (juce::Justification::centred);
     resultLabel.setFont (juce::Font (16.0f));
     addAndMakeVisible (resultLabel);
@@ -62,7 +82,7 @@ EarTrainerAudioProcessorEditor::EarTrainerAudioProcessorEditor (EarTrainerAudioP
 
     refreshLabels();
 
-    setSize (760, 520);
+    setSize (760, 560);
 }
 
 EarTrainerAudioProcessorEditor::~EarTrainerAudioProcessorEditor() = default;
@@ -84,7 +104,16 @@ void EarTrainerAudioProcessorEditor::resized()
     scoreLabel.setBounds (area.removeFromTop (20));
     area.removeFromTop (6);
 
-    allowCutsToggle.setBounds (area.removeFromTop (24).reduced (200, 0));
+    allowCutsToggle.setBounds (area.removeFromTop (24).reduced (220, 0));
+    area.removeFromTop (4);
+
+    // Difficulty row: caption + 4 buttons side by side.
+    auto diffRow = area.removeFromTop (28);
+    gainStepCaption.setBounds (diffRow.removeFromLeft (140));
+    auto diffButtonsArea = diffRow.reduced (150, 0);
+    int diffButtonWidth = diffButtonsArea.getWidth() / (int) gainStepButtons.size();
+    for (int i = 0; i < gainStepButtons.size(); ++i)
+        gainStepButtons[i]->setBounds (diffButtonsArea.removeFromLeft (diffButtonWidth).reduced (3, 0));
     area.removeFromTop (8);
 
     // Bottom row: New Round + direction answer buttons.
@@ -119,6 +148,14 @@ void EarTrainerAudioProcessorEditor::buttonClicked (juce::Button* button)
     if (button == &allowCutsToggle)
     {
         processor.setAllowCutRounds (allowCutsToggle.getToggleState());
+        return;
+    }
+
+    // Gain step (difficulty) buttons.
+    if (button->getComponentID().startsWith ("gainstep_"))
+    {
+        float stepDb = button->getComponentID().fromFirstOccurrenceOf ("gainstep_", false, false).getFloatValue();
+        processor.setGainStepDb (stepDb);
         return;
     }
 
@@ -179,17 +216,18 @@ void EarTrainerAudioProcessorEditor::submitAnswer (bool guessedBoost)
     bool correct = processor.checkAnswer (selectedFreqIndex, guessedBoost);
 
     juce::String correctFreqText = juce::String (processor.getCorrectFreqValue(), 0) + " Hz";
-    juce::String direction = processor.wasBoost() ? "boosted (+6dB)" : "cut (-6dB)";
+    juce::String direction = processor.wasBoost() ? "boosted" : "cut";
+    juce::String stepText = juce::String ((int) processor.getGainStepDb()) + "dB";
 
     if (correct)
     {
-        resultLabel.setText ("Correct! It was " + correctFreqText + ", " + direction,
+        resultLabel.setText ("Correct! It was " + correctFreqText + ", " + direction + " (" + stepText + ")",
                               juce::dontSendNotification);
         resultLabel.setColour (juce::Label::textColourId, juce::Colours::lightgreen);
     }
     else
     {
-        resultLabel.setText ("Wrong. It was " + correctFreqText + ", " + direction,
+        resultLabel.setText ("Wrong. It was " + correctFreqText + ", " + direction + " (" + stepText + ")",
                               juce::dontSendNotification);
         resultLabel.setColour (juce::Label::textColourId, juce::Colours::orangered);
     }
