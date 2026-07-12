@@ -1,0 +1,50 @@
+name: Build VST3 Plugin
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout plugin code
+        uses: actions/checkout@v4
+        with:
+          path: EarTrainerEQ
+
+      - name: Checkout JUCE next to the project
+        uses: actions/checkout@v4
+        with:
+          repository: juce-framework/JUCE
+          path: JUCE
+
+      - name: Install dependencies (macOS runner only)
+        if: runner.os == 'macOS'
+        run: brew install ninja
+
+      - name: Configure project (CMake)
+        working-directory: EarTrainerEQ
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build project
+        working-directory: EarTrainerEQ
+        run: cmake --build build --config Release --parallel
+
+      - name: Locate built .vst3
+        shell: bash
+        working-directory: EarTrainerEQ
+        run: |
+          mkdir -p artifact_out
+          find build -iname "*.vst3" -exec cp -r {} artifact_out/ \;
+
+      - name: Upload built plugin as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: EarTrainerEQ-${{ matrix.os }}
+          path: EarTrainerEQ/artifact_out
