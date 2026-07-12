@@ -6,10 +6,11 @@
 /**
     Plugin UI:
     - A grid of 28 frequency buttons (select one - it highlights).
-    - Two direction buttons: "Boosted (+6dB)" and "Cut (-6dB)" - clicking one
-      submits the current frequency selection + that direction as the answer.
+    - Two direction buttons: "Boosted" and "Cut" - clicking one submits the
+      current frequency selection + that direction as the answer.
     - A "New Round" button.
-    - A checkbox to enable/disable cut (-6dB) rounds.
+    - A checkbox to enable/disable cut rounds.
+    - Four difficulty buttons (3/6/9/12 dB) to choose the gain step magnitude.
     - A result label and a score label.
 */
 class EarTrainerAudioProcessorEditor : public juce::AudioProcessorEditor,
@@ -33,9 +34,12 @@ private:
     int selectedFreqIndex = -1;
 
     juce::TextButton newRoundButton  { "New Round" };
-    juce::TextButton boostButton     { "Boosted (+6dB)" };
-    juce::TextButton cutButton       { "Cut (-6dB)" };
-    juce::ToggleButton allowCutsToggle { "Include cuts (-6dB)" };
+    juce::TextButton boostButton     { "Boosted" };
+    juce::TextButton cutButton       { "Cut" };
+    juce::ToggleButton allowCutsToggle { "Include cuts" };
+
+    juce::OwnedArray<juce::TextButton> gainStepButtons;
+    juce::Label gainStepCaption;
 
     juce::Label resultLabel;
     juce::Label scoreLabel;
