@@ -1,0 +1,44 @@
+name: Build VST3 Plugin
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Скачать код плагина
+        uses: actions/checkout@v4
+
+      - name: Скачать JUCE рядом с проектом
+        uses: actions/checkout@v4
+        with:
+          repository: juce-framework/JUCE
+          path: JUCE
+
+      - name: Установить зависимости (только macOS runner)
+        if: runner.os == 'macOS'
+        run: brew install ninja
+
+      - name: Настроить проект (CMake)
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Собрать проект
+        run: cmake --build build --config Release --parallel
+
+      - name: Найти собранный .vst3
+        shell: bash
+        run: |
+          mkdir -p artifact_out
+          find build -iname "*.vst3" -exec cp -r {} artifact_out/ \;
+
+      - name: Загрузить готовый плагин как артефакт
+        uses: actions/upload-artifact@v4
+        with:
+          name: EarTrainerEQ-${{ matrix.os }}
+          path: artifact_out
