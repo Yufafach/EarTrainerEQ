@@ -86,7 +86,7 @@ void EarTrainerAudioProcessor::startNewRound()
     correctFreqIndex = freqDist (rng);
 
     const bool boost = allowCutRounds ? (directionDist (rng) == 1) : true;
-    currentGainDb = boost ? gainStepDb : -gainStepDb;
+    currentGainDb = boost ? selectedGainStepDb : -selectedGainStepDb;
 
     updateFilterCoefficients();
 
