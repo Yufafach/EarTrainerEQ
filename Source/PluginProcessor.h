@@ -56,11 +56,14 @@ public:
     // Fixed frequency list (Hz). DO NOT change the order/contents.
     static const std::array<float, 28> frequencyList;
 
-    static constexpr float qFactor    = 4.3f;
-    static constexpr float gainStepDb = 6.0f; // always exactly +6 or -6 dB
+    static constexpr float qFactor = 4.3f;
+
+    // The gain step magnitudes the user can choose between as a difficulty level.
+    static constexpr std::array<float, 4> gainStepOptions { 3.0f, 6.0f, 9.0f, 12.0f };
 
     // Start a new round: pick a random frequency + random direction (respecting
-    // allowCutRounds) and recompute the filter coefficients.
+    // allowCutRounds) using the currently selected gain step magnitude, and
+    // recompute the filter coefficients.
     void startNewRound();
 
     // Check the user's answer: freqIndex is the guessed index in frequencyList,
@@ -82,6 +85,10 @@ public:
     void setAllowCutRounds (bool shouldAllow) { allowCutRounds = shouldAllow; }
     bool getAllowCutRounds() const { return allowCutRounds; }
 
+    // The magnitude (in dB) used for the NEXT round. Must be one of gainStepOptions.
+    void  setGainStepDb (float newStepDb) { selectedGainStepDb = newStepDb; }
+    float getGainStepDb() const { return selectedGainStepDb; }
+
 private:
     //==============================================================================
     using Filter       = juce::dsp::IIR::Filter<float>;
@@ -93,7 +100,8 @@ private:
     double currentSampleRate = 44100.0;
 
     int   correctFreqIndex = 0;
-    float currentGainDb    = gainStepDb; // +6 or -6
+    float currentGainDb    = 6.0f; // the actual +/- value applied this round
+    float selectedGainStepDb = 6.0f; // the difficulty level chosen by the user (3/6/9/12)
 
     bool roundActive = false;
     bool allowCutRounds = true;
