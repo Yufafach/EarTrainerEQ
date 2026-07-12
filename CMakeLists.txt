@@ -18,6 +18,8 @@ juce_add_plugin(EarTrainerEQ
     FORMATS VST3 Standalone
     PRODUCT_NAME "EarTrainerEQ")
 
+juce_generate_juce_header(EarTrainerEQ)
+
 target_sources(EarTrainerEQ
     PRIVATE
         Source/PluginProcessor.cpp
